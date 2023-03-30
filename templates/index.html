@@ -1,0 +1,277 @@
+<!-- 크래프톤 정글 2기 장서영 -->
+<!DOCTYPE html>
+<html lang="ko">
+  
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+            integrity="sha384-B0vP5xmATw1 K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2 l"
+            crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU 6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+
+    <!-- GOOGLE FONTS 1 : 전체 -->
+    <link href="https://fonts.googleapis.com/css2?family=Stylish&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- GOOGLE FONTS 2 : "ver2.0" 사용 -->
+    <link href="https://fonts.googleapis.com/css2?family=Labrada:wght@800&family=Stylish&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <title>크래프톤 정글 2기 | 장서영</title>
+
+    <!-- style -->
+    <style type="text/css">
+        * {
+            font-family: "Stylish", sans-seif;
+        }
+
+        .wrap {
+            width: 900px;
+            margin: auto;
+        }
+
+        .card-title {
+            font-size: large;
+            font-weight: bold;
+        }
+
+        .card-text {
+            font-size: medium;
+            font-weight: normal;
+        }
+
+        .card-likes {
+            font-size: medium;
+            font-weight: lighter;
+            color: green;
+            margin-bottom: 0rem;
+        }
+
+        .edit-button {
+            background-color: #00AFFF;
+            color: white;
+            font-size: medium;
+            border-radius: 5px;
+            border-color: unset;
+        }
+
+        .delete-button {
+            background-color: red;
+            color: white;
+            font-size: medium;
+            border-radius: 5px;
+            border-color: unset;
+        }
+
+        #save-button {
+            background-color: green;
+            color: white;
+            font-size: medium;
+            border-radius: 5px;
+            border-color: unset;
+        }
+
+        .link-like {
+            color:blue;
+            font-size: medium;
+        }
+
+        .new-form {
+            width: auto;
+            height: auto;
+            margin: 20px 20px;
+        }
+    </style>
+
+    <!-- script -->
+    <script>
+        $(document).ready(() => showMemos())
+    
+
+        // 1. 리스팅 API - 저장된 카드 보여주기 (Read)
+        function showMemos() {
+            // 1) 카드(메모)들이 리스팅 될 공간을 우선 비운다.
+            $("#cards-list").html("");
+
+            // 2) /memo/list에 GET 방식으로 메모 정보를 요청한다.
+            $.ajax({
+                type: "GET",
+                url: "/memo/list",
+                data: {},
+                success: function (response) {
+                    // 3) memos로 메모 정보를 받는다.
+                    let memos = response["memos"];
+                    for (let i = 0; i < memos.length; i  ) {
+                        // 4) makeCard()를 이용해 HTML을 붙인다. →→
+                        makeCard(memos[i]["title"], memos[i]["text"], memos[i]["like"], memos[i]["card_id"]);
+                    }
+                }
+            })
+        }
+        // →→ makeCard() 함수 : 매개변수로 title/text/like/id를 받아 card를 만든 후, #card-list 부분에 append 한다.
+        function makeCard(title, text, like, id) {
+            let temp_html = `<div class="card" id="card${id}">
+                                <div class="org-form" id="org-form-id${id}" style="display: block">
+                                    <div class="card-body">
+                                        <p class="card-title">${title}</p>
+                                        <p class="card-text">${text}</p>
+                                        <p class="card-likes">${like}</p>
+                                    </div>
+                                    <footer id="card-footer-mine" style="margin: 0px 20px 10px;">
+                                        <p class="lead">
+                                            <button type="submit" class="edit-button" onclick="showModForm(${id})">수정</button>
+                                            <button type="submit" class="delete-button" onclick="deleteMemo(${id})">삭제</button>
+                                            <a href="#" onclick="likeMemo('${id}')" class="link-like">
+                                                좋아요!
+                                                <span class="icon">
+                                                    <i class="bi bi-hand-thumbs-up"></i>
+                                                </span>
+                                            </a>
+                                        </p>
+                                    </footer>
+                                </div>
+
+                                <div class="new-form" id="new-form-id${id}" style="display: none">
+                                    <div>
+                                        <p><input type="text" name="new-title" class="new-title" id="new-title-id${id}" style="width: 100%" value="${title}"></p>
+                                        <p><textarea name="new-text" class="new-text" id="new-text-id${id}" style="width: 100%">${text}</textarea></p>
+                                    </div>
+                                    <p><button type="button" class="save-button" id="save-button" onclick="modifyMemo(${id})">저장</button></p>
+                                </div>
+                            </div>`;
+
+            $("#card-list").append(temp_html);
+        }
+
+
+        // 2. 저장 API - 카드 생성 (Create)
+        function postMemo() {
+            // 1) 유저가 입력한 데이터를 #memo-title과 #memo-content에서 가져온다.
+            let title_give = $("#memo-title").val();
+            let text_give = $("#memo-content").val();
+
+            // 2) /memo/post에 POST 방식으로 (data에 title_give와 text_give를 담아) 메모 생성을 요청한다.
+            $.ajax({
+                type: "POST",  
+                url: "/memo/post", 
+                data: {"title_give": title_give, "text_give": text_give},
+                success: function (response) { 
+                    if (response["result"] == "success") {
+                        // 3) 성공하면 얼럿을 띄우고, 페이지를 새로고침 한다.
+                        alert("포스팅 성공!");
+                        window.location.reload();
+                    } else {
+                        alert("포스팅 실패!");
+                    }
+                }
+            })
+        }
+
+
+        // 3. 수정 API - 카드 수정 (Update)
+        function modifyMemo(id){
+            // 1) 수정할 수 있는 폼을 띄운다. →→
+            showModForm();
+
+            // 2) 유저가 입력한 (변경한)데이터를 #new-title-id(id값)과 #new-text-id(id값)에서 가져온다.
+            let title_give = $(`#new-title-id${id}`).val()
+            let text_give = $(`#new-text-id${id}`).val()
+            
+            // 3) /memo/update에 POST 방식으로 (data에 title_give와 text_give와 id를 담아) 메모 수정을 요청한다.
+            $.ajax({
+                type: "POST",
+                url: '/memo/update',
+                data: {"title_give": title_give, "text_give": text_give, "id_give": id},
+                success: function (response) {
+                    if(response["result"] == "success"){
+                        // 4) 성공하면 얼럿을 띄우고, 페이지를 새로고침 한다.
+                        alert("수정 완료!");
+                        window.location.reload();
+                    } else {
+                        alert("수정 실패!");
+                    }
+                }
+            })
+        }
+        // →→ showModForm() 함수 : jquery로 기존 폼은 가리고 수정 폼을 띄운다.
+        function showModForm(id) {
+            $(`#org-form-id${id}`).hide();
+            $(`#new-form-id${id}`).show();
+        }
+
+
+        // 4. 삭제 API - 카드 삭제 (Delete)
+        function deleteMemo(id) {
+            // 1) /memo/delete에 POST 방식으로 (data에 id를 담아) 메모 삭제를 요청한다.
+            $.ajax({
+                type: "POST",
+                url: "/memo/delete",
+                data: {"id_give": id},
+                success: function (response) { 
+                    if(response["result"] == "success"){  
+                        // 2) 성공하면 얼럿을 띄우고, 페이지를 새로고침 한다.
+                        alert("삭제 완료!");
+                        window.location.reload();
+                    } else {
+                        alert("삭제 실패!");
+                    }
+                }
+            })
+        }
+
+
+        // 5. 좋아요 API - 카드 좋아요 수 1 증가 (Update)
+        function likeMemo(id) {
+            // 1) /memo/like에 POST 방식으로 (data에 id를 담아) 메모 업데이트(좋아요  1)를 요청한다.
+            $.ajax({
+                type: 'POST',
+                url: '/memo/like',
+                data: {'id_give': id},
+                success: function (response) {
+                    if(response['result'] == 'success') {
+                        // 2) 성공하면 페이지를 새로고침한다.
+                        window.location.reload();
+                    } else {
+                        alert("좋아요 실패!");
+                    }
+                }
+            })
+        }
+    </script>
+  </head>
+  
+  <body>
+    <div class="wrap">
+        <!-- 메모 작성 칸 -->
+        <div class="jumbotron">
+            <h1 class="display-4">
+                나홀로메모장
+                <span class="badge badge-secondary" style="font-family: 'Labrada', serif;">ver2.0</span>
+            </h1>
+            <div style="width: 400px">
+                <div class="form-group">
+                    <input id="memo-title" class="form-control" placeholder="제목을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <textarea id="memo-content" class="form-control" rows="2" placeholder="내용을 입력하세요"></textarea>
+                </div>
+                <p class="lead">
+                    <button type="submit" class="btn btn-primary" onclick="postMemo()">저장하기</button>
+                </p> 
+            </div>
+        </div>
+        <!-- 카드 리스트 나열 → showMemos() -->
+        <div id="card-list" class="card-columns"></div>
+    </div>
+  </body>
+
+</html>
